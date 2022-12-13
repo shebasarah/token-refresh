@@ -9,6 +9,16 @@ class GetAPIKey:
         secret_name = "sheba_CF_API_Key"
         region_name = "ap-southeast-2"
 
+        # """Create an STS client object that represents a live connection to the STS service"""
+        # sts_client = boto3.client("sts")
+
+        # """Call the assume_role method of the STSConnection object and pass the role ARN and a role session name"""
+        # assumed_role_object = sts_client.assume_role(
+        #     RoleArn="arn:aws:iam::490768973769:role/nzh-developer-access",
+        #     RoleSessionName="AssumeRoleSession1",
+        # )
+        # print(assumed_role_object)
+
         """ Create a Secrets Manager client"""
         session = boto3.session.Session()
         client = session.client(service_name="secretsmanager", region_name=region_name)
