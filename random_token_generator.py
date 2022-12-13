@@ -1,7 +1,7 @@
 import random
+import string
 import boto3
 from botocore.exceptions import ClientError
-import string
 import os
 
 """Random token generator class"""
@@ -22,7 +22,9 @@ class RandomTokenGenerator:
         session = boto3.session.Session()
         client = session.client(service_name="secretsmanager", region_name=region_name)
         try:
-            response = client.get_random_password(ExcludeCharacters=exclude_characters)
+            response = client.get_random_password(
+                ExcludePunctuation=True, PasswordLength=32
+            )
             return response["RandomPassword"]
         except ClientError as e:
             raise e

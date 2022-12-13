@@ -1,0 +1,59 @@
+import boto3
+from botocore.exceptions import ClientError
+
+"""Class to modify token in elb listener"""
+
+
+class ModifyListenerRule:
+    def modify_rule(self, new_token, current_token):
+
+        region_name = "ap-southeast-2"
+
+        """Create secret manager client"""
+        session = boto3.session.Session()
+        client = session.client(service_name="elbv2", region_name=region_name)
+        try:
+            response = client.modify_rule(
+                RuleArn="arn:aws:elasticloadbalancing:ap-southeast-2:177970211836:listener-rule/app/sheba-loadbalancer/38a97bd60a7d8892/44531f4d8ead8087/526eb7337545c69d",
+                Conditions=[
+                    {
+                        "Field": "http-header",
+                        "HttpHeaderConfig": {
+                            "HttpHeaderName": "X-WAF-SECRET",
+                            "Values": [
+                                new_token,
+                                current_token,
+                            ],
+                        },
+                    },
+                ],
+            )
+            print(response)
+        except ClientError as e:
+            raise e
+
+    def update_rule(self, new_token):
+
+        region_name = "ap-southeast-2"
+
+        """Create secret manager client"""
+        session = boto3.session.Session()
+        client = session.client(service_name="elbv2", region_name=region_name)
+        try:
+            response = client.modify_rule(
+                RuleArn="arn:aws:elasticloadbalancing:ap-southeast-2:177970211836:listener-rule/app/sheba-loadbalancer/38a97bd60a7d8892/44531f4d8ead8087/526eb7337545c69d",
+                Conditions=[
+                    {
+                        "Field": "http-header",
+                        "HttpHeaderConfig": {
+                            "HttpHeaderName": "X-WAF-SECRET",
+                            "Values": [
+                                new_token,
+                            ],
+                        },
+                    },
+                ],
+            )
+            print(response)
+        except ClientError as e:
+            raise e
