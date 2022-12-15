@@ -4,7 +4,10 @@ from botocore.exceptions import ClientError
 
 
 class GetAPIKey:
-    def get_secret():
+    """Class to Get the API Key to access cloudflare."""
+
+    def get_secret(self):
+        """Method to get the API Key."""
 
         secret_name = "sheba_CF_API_Key"
         region_name = "ap-southeast-2"
@@ -19,15 +22,15 @@ class GetAPIKey:
         # )
         # print(assumed_role_object)
 
-        """ Create a Secrets Manager client"""
+        # Create a Secrets Manager client
         session = boto3.session.Session()
         client = session.client(service_name="secretsmanager", region_name=region_name)
 
         try:
             get_secret_value_response = client.get_secret_value(SecretId=secret_name)
-        except ClientError as e:
-            raise e
+        except ClientError as error:
+            raise error
 
-        """Decrypts secret using the associated KMS key."""
+        # Decrypts secret using the associated KMS key
         secret = get_secret_value_response["SecretString"]
         return secret
