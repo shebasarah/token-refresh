@@ -1,7 +1,8 @@
 """Module for Lambda handler for secret rotation"""
 import boto3
-from botocore.exceptions import ClientError
-import requests
+
+from alb_listener_modifier import ALBListenerModifier
+from cf_token_refresher import CFTokenRefresher
 
 
 def lambda_handler(event, context):
@@ -61,82 +62,23 @@ def create_secret(service_client, arn, token):
 
 def set_secret(service_client, arn, token):
     """set the new token in cloudflare and application load balancer"""
-    region_name = "ap-southeast-2"
-    secret_name = "sheba_CF_API_Key"
 
     # retrieve the old secret
     old_token = service_client.get_secret_value(SecretId=arn, VersionStage="AWSCURRENT")
     # retrieve the new secret
     new_token = service_client.get_secret_value(SecretId=arn, VersionStage="AWSPENDING")
+    print(new_token['SecretString'])
 
     # Change token in cloudflare
     print("Rotating the token in cloudflare...")
-    cf_zone_id = "72bab892f6318efaa9451b6fa18b9a26"
-    cf_rule_id = "b3ac5edd385a47f2827bd62d9dd923d0"
-
-    # Get the cloudflare API key to access cloudflare
-    session = boto3.session.Session()
-    client = session.client(service_name="secretsmanager", region_name=region_name)
-    try:
-        get_secret_value_response = client.get_secret_value(SecretId=secret_name)
-    except ClientError as error:
-        raise error
-
-        # Decrypts secret using the associated KMS key
-    cf_api_key = get_secret_value_response["SecretString"]
-
-    # Modify Token for Http Request Header
-    response = requests.put(
-        f"https://api.cloudflare.com/client/v4/zones/{cf_zone_id}/rulesets/phases/http_request_late_transform/entrypoint",
-        headers={
-            "Authorization": f"Bearer {cf_api_key}",
-            "Content-Type": "application/json",
-        },
-        json={
-            "rules": [
-                {
-                    "id": cf_rule_id,
-                    "description": "X-WAF-SECRET",
-                    "expression": '(http.host ne "1")',
-                    "action": "rewrite",
-                    "action_parameters": {
-                        "headers": {
-                            "X-WAF-SECRET": {
-                                "operation": "set",
-                                "value": token,
-                            },
-                        },
-                    },
-                    "enabled": True,
-                },
-            ],
-        },
-        timeout=10,
-    )
+    token_refresh = CFTokenRefresher()
+    response = token_refresh.roll_token(new_token['SecretString'])
     print(response.json())
 
     # Modify the token in the listener rule
     print("Modifying ELB listener rule with two token values...")
-
-    # Create secret manager client
-    session = boto3.session.Session()
-    client = session.client(service_name="elbv2", region_name=region_name)
-    try:
-        response = client.modify_rule(
-            RuleArn="arn:aws:elasticloadbalancing:ap-southeast-2:177970211836:listener-rule/app/sheba-loadbalancer/38a97bd60a7d8892/44531f4d8ead8087/526eb7337545c69d",
-            Conditions=[
-                {
-                    "Field": "http-header",
-                    "HttpHeaderConfig": {
-                        "HttpHeaderName": "X-WAF-SECRET",
-                        "Values": [old_token, new_token],
-                    },
-                },
-            ],
-        )
-        print(response)
-    except ClientError as error:
-        raise error
+    modify_listener = ALBListenerModifier()
+    modify_listener.modify_rule([old_token['SecretString'], new_token['SecretString']])
 
 
 def test_secret(service_client, arn, token):
@@ -170,28 +112,9 @@ def finish_secret(service_client, arn, token):
             current_token = service_client.get_secret_value(
                 SecretId=arn, VersionStage="AWSCURRENT"
             )
-            print(current_token)
+            print(current_token['SecretString'])
             # Updating listener rule and removing the old token
             print("Updating the ELB listener rule with only the new token...")
-            region_name = "ap-southeast-2"
-
-            # Create secret manager client
-            session = boto3.session.Session()
-            client = session.client(service_name="elbv2", region_name=region_name)
-            try:
-                response = client.modify_rule(
-                    RuleArn="arn:aws:elasticloadbalancing:ap-southeast-2:177970211836:listener-rule/app/sheba-loadbalancer/38a97bd60a7d8892/44531f4d8ead8087/526eb7337545c69d",
-                    Conditions=[
-                        {
-                            "Field": "http-header",
-                            "HttpHeaderConfig": {
-                                "HttpHeaderName": "X-WAF-SECRET",
-                                "Values": current_token,
-                            },
-                        },
-                    ],
-                )
-                print(response)
-            except ClientError as error:
-                raise error
+            modify_listener = ALBListenerModifier()
+            modify_listener.modify_rule([current_token['SecretString']])
             break
