@@ -1,6 +1,6 @@
-from cloudflare_api_call import TokenRefresh
+from cf_token_refresher import CFTokenRefresher
 from random_token_generator import RandomTokenGenerator
-from modify_listener import ModifyListenerRule
+from alb_listener_modifier import ALBListenerModifier
 from store_token_SM import SaveToken
 from get_curent_token import GetToken
 
@@ -30,7 +30,7 @@ if __name__ == "__main__":
     )
     """Modify the token in the listener rule"""
     print("Modifying ELB listener rule with two token values...")
-    modify_listener = ModifyListenerRule()
+    modify_listener = ALBListenerModifier()
     modify_listener.modify_rule(old_token, new_token)
     print(
         "-----------------------------------------------------------------------------------------------------------------------------------------------------------"
@@ -44,7 +44,7 @@ if __name__ == "__main__":
     )
     """Change token in cloudflare"""
     print("Rotating the token in cloudflare...")
-    token_refresh = TokenRefresh()
+    token_refresh = CFTokenRefresher()
     response = token_refresh.roll_token(new_token)
     print(response.json())
     print(
