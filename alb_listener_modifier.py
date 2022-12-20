@@ -22,12 +22,13 @@ class ALBListenerModifier:
                     {
                         "Field": "http-header",
                         "HttpHeaderConfig": {
-                            "HttpHeaderName": "X-WAF-SECRET",
+                            "HttpHeaderName": "X-ALB-SECRET",
                             "Values": token,
                         },
                     },
                 ],
             )
-            print(response)
+            # print(response)
+            return response
         except ClientError as error:
             raise error
