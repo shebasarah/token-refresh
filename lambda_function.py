@@ -1,4 +1,4 @@
-"""Module for Lambda handler for secret rotation"""
+"""Module for Lambda handler for secret rotation."""
 import boto3
 
 from alb_listener_modifier import ALBListenerModifier
@@ -7,7 +7,7 @@ from cf_token_refresher import CFTokenRefresher
 
 def lambda_handler(event, context):
 
-    """Lambda handler function"""
+    """Lambda handler function."""
 
     arn = event["SecretId"]
     token = event["ClientRequestToken"]
@@ -39,7 +39,7 @@ def lambda_handler(event, context):
 
 def create_secret(service_client, arn, token):
 
-    """Function to create a new secret"""
+    """Function to create a new secret."""
 
     # Now try to get the secret version, if that fails, put a new secret
     try:
@@ -61,7 +61,8 @@ def create_secret(service_client, arn, token):
 
 
 def set_secret(service_client, arn, token):
-    """set the new token in cloudflare and application load balancer"""
+    
+    """Set the new token in cloudflare and application load balancer."""
 
     # retrieve the old secret
     old_token = service_client.get_secret_value(SecretId=arn, VersionStage="AWSCURRENT")
@@ -75,10 +76,10 @@ def set_secret(service_client, arn, token):
     response = token_refresh.roll_token(new_token['SecretString'])
     print(response.json())
 
-    # Modify the token in the listener rule
-    print("Modifying ELB listener rule with two token values...")
-    modify_listener = ALBListenerModifier()
-    modify_listener.modify_rule([old_token['SecretString'], new_token['SecretString']])
+    # # Modify the token in the listener rule
+    # print("Modifying ELB listener rule with two token values...")
+    # modify_listener = ALBListenerModifier()
+    # modify_listener.modify_rule([old_token['SecretString'], new_token['SecretString']])
 
 
 def test_secret(service_client, arn, token):
@@ -89,6 +90,7 @@ def test_secret(service_client, arn, token):
 
 
 def finish_secret(service_client, arn, token):
+    
     """Method to set the Version stage of the new token."""
 
     # First describe the secret to get the current version
@@ -113,8 +115,9 @@ def finish_secret(service_client, arn, token):
                 SecretId=arn, VersionStage="AWSCURRENT"
             )
             print(current_token['SecretString'])
-            # Updating listener rule and removing the old token
-            print("Updating the ELB listener rule with only the new token...")
-            modify_listener = ALBListenerModifier()
-            modify_listener.modify_rule([current_token['SecretString']])
+            # # Updating listener rule and removing the old token
+            # print("Updating the ELB listener rule with only the new token...")
+            # modify_listener = ALBListenerModifier()
+            # modify_listener.modify_rule([current_token['SecretString']])
             break
+

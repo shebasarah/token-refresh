@@ -28,10 +28,21 @@ if __name__ == "__main__":
     print(
         "-----------------------------------------------------------------------------------------------------------------------------------------------------------"
     )
+    """Change token in cloudflare"""
+    print("Rotating the token in cloudflare...")
+    token_refresh = CFTokenRefresher()
+    response = token_refresh.roll_token(new_token)
+    result = response.json()
+    print(result["success"])
+    print(
+        "-----------------------------------------------------------------------------------------------------------------------------------------------------------"
+    )
     """Modify the token in the listener rule"""
     print("Modifying ELB listener rule with two token values...")
     modify_listener = ALBListenerModifier()
-    modify_listener.modify_rule(old_token, new_token)
+    response = modify_listener.modify_rule([old_token, new_token])
+    response = response["ResponseMetadata"]
+    print(response["HTTPStatusCode"])
     print(
         "-----------------------------------------------------------------------------------------------------------------------------------------------------------"
     )
@@ -42,17 +53,12 @@ if __name__ == "__main__":
     print(
         "-----------------------------------------------------------------------------------------------------------------------------------------------------------"
     )
-    """Change token in cloudflare"""
-    print("Rotating the token in cloudflare...")
-    token_refresh = CFTokenRefresher()
-    response = token_refresh.roll_token(new_token)
-    print(response.json())
-    print(
-        "-----------------------------------------------------------------------------------------------------------------------------------------------------------"
-    )
+
     """Updating listener rule and removing the old token"""
     print("Updating the ELB listener rule with only the new token...")
-    modify_listener.update_rule(current_token)
+    response = modify_listener.modify_rule([current_token])
+    response = response["ResponseMetadata"]
+    print(response["HTTPStatusCode"])
     print(
         "-----------------------------------------------------------------------------------------------------------------------------------------------------------"
     )

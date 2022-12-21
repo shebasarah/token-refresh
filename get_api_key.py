@@ -9,7 +9,7 @@ class GetAPIKey:
     def get_secret(self):
         """Method to get the API Key."""
 
-        secret_name = "sheba_CF_API_Key"
+        secret_name = "nzh-cf-access-token-to-modify-transform-rules"
         region_name = "ap-southeast-2"
 
         # Create a Secrets Manager client
@@ -24,3 +24,4 @@ class GetAPIKey:
         # Decrypts secret using the associated KMS key
         secret = get_secret_value_response["SecretString"]
         return secret
+
