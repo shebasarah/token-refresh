@@ -61,25 +61,25 @@ def create_secret(service_client, arn, token):
 
 
 def set_secret(service_client, arn, token):
-    
+
     """Set the new token in cloudflare and application load balancer."""
 
     # retrieve the old secret
     old_token = service_client.get_secret_value(SecretId=arn, VersionStage="AWSCURRENT")
     # retrieve the new secret
     new_token = service_client.get_secret_value(SecretId=arn, VersionStage="AWSPENDING")
-    print(new_token['SecretString'])
+    print(new_token["SecretString"])
 
     # Change token in cloudflare
     print("Rotating the token in cloudflare...")
     token_refresh = CFTokenRefresher()
-    response = token_refresh.roll_token(new_token['SecretString'])
+    response = token_refresh.roll_token(new_token["SecretString"])
     print(response.json())
 
-    # # Modify the token in the listener rule
-    # print("Modifying ELB listener rule with two token values...")
-    # modify_listener = ALBListenerModifier()
-    # modify_listener.modify_rule([old_token['SecretString'], new_token['SecretString']])
+    # Modify the token in the listener rule
+    print("Modifying ELB listener rule with two token values...")
+    modify_listener = ALBListenerModifier()
+    modify_listener.modify_rule([old_token["SecretString"], new_token["SecretString"]])
 
 
 def test_secret(service_client, arn, token):
@@ -90,7 +90,7 @@ def test_secret(service_client, arn, token):
 
 
 def finish_secret(service_client, arn, token):
-    
+
     """Method to set the Version stage of the new token."""
 
     # First describe the secret to get the current version
@@ -114,10 +114,9 @@ def finish_secret(service_client, arn, token):
             current_token = service_client.get_secret_value(
                 SecretId=arn, VersionStage="AWSCURRENT"
             )
-            print(current_token['SecretString'])
-            # # Updating listener rule and removing the old token
-            # print("Updating the ELB listener rule with only the new token...")
-            # modify_listener = ALBListenerModifier()
-            # modify_listener.modify_rule([current_token['SecretString']])
+            print(current_token["SecretString"])
+            # Updating listener rule and removing the old token
+            print("Updating the ELB listener rule with only the new token...")
+            modify_listener = ALBListenerModifier()
+            modify_listener.modify_rule([current_token["SecretString"]])
             break
-
